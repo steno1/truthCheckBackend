@@ -13,12 +13,15 @@ dotenv.config();
 
 const app = express();
 
-
+// Middleware to enable CORS
 app.use(cors({
-  origin: '*'  
+  origin: '*'  // Allow all origins, modify as necessary for security in production
 }));
 
+// Middleware to parse incoming JSON requests
 app.use(express.json());
+
+// Log incoming requests (for development)
 app.use(morgan('dev'));
 
 // Log all incoming requests
@@ -29,7 +32,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/feedback', feedbackRoutes);
-app.use('/api/check', checkRoutes);
+app.use('/api/check/text', checkRoutes);  // The check route for verifying claims
 app.use('/api/report', reportRoutes);
 app.use('/api/languages', languageRoutes);
 
@@ -44,5 +47,5 @@ mongoose.connect(MONGO_URI)
   })
   .catch((err) => {
     console.error('MongoDB connection failed:', err);
-    process.exit(1);  
+    process.exit(1);  // Exit the process with an error code
   });

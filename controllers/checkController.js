@@ -4,9 +4,9 @@ import Check from '../models/Check.js';
 const GOOGLE_FACT_CHECK_API_URL = process.env.GOOGLE_FACT_CHECK_API_URL;
 const API_KEY = process.env.API_KEY;
 
-
 export const checkText = async (req, res) => {
   const { text } = req.body;
+
   if (!text) {
     console.log('Error: Text is required');
     return res.status(400).json({ error: 'Text is required' });
@@ -15,14 +15,27 @@ export const checkText = async (req, res) => {
   console.log('Received text for verification:', text);
 
   try {
-    // Check for existing cached result
+    // Check for cached result
     const cached = await Check.findOne({ type: 'text', content: text });
     if (cached) {
       console.log('Returning cached result');
-      return res.status(200).json(cached);
+      return res.status(200).json({
+        claims: [
+          {
+            text: cached.content,
+            claimReview: [
+              {
+                textualRating: cached.result || 'No rating',
+                url: cached.sources?.[0] || '',
+                score: cached.score || 50,
+              },
+            ],
+          },
+        ],
+      });
     }
 
-    // Call Google Fact Check API
+    // Call Google API
     const response = await axios.get(GOOGLE_FACT_CHECK_API_URL, {
       params: {
         query: text,
@@ -30,23 +43,20 @@ export const checkText = async (req, res) => {
       },
     });
 
-    console.log('Google API response:', response.data);
-
-    const claims = response.data.claims;
-    let result = 'No verdict available';
+    const claims = response?.data?.claims || [];
+    let result = 'Unverified';
     let score = 50;
     let sources = [];
 
-    if (claims && claims.length > 0) {
-      const firstClaim = claims[0];
-      const review = firstClaim.claimReview?.[0];
-      result = review?.textRating || 'Unverified';
+    if (claims.length > 0) {
+      const review = claims[0]?.claimReview?.[0];
+      result = review?.textualRating || 'Unverified';
       score = result.toLowerCase().includes('true') ? 80 : 30;
-      sources = firstClaim.claimReview.map(r => r.url);
+      sources = claims[0]?.claimReview?.map(r => r.url) || [];
     }
 
     // Save to DB
-    const check = await Check.create({
+    await Check.create({
       type: 'text',
       content: text,
       result,
@@ -54,28 +64,49 @@ export const checkText = async (req, res) => {
       sources,
     });
 
-    res.status(200).json(check);
-  } catch (err) {
-    console.error('Error verifying text:', err.message);
-    res.status(500).json({ error: 'Failed to verify text' });
+    // Respond in expected format
+    return res.status(200).json({
+      claims: [
+        {
+          text,
+          claimReview: [
+            {
+              textualRating: result,
+              url: sources[0] || '',
+              score,
+            },
+          ],
+        },
+      ],
+    });
+
+  } catch (error) {
+    console.error('Error during text check:', error.message);
+    return res.status(500).json({ error: 'Failed to verify claim' });
   }
 };
 
 export const checkImage = async (req, res) => {
   const { imageUrl } = req.body;
+
   if (!imageUrl) {
     return res.status(400).json({ error: 'Image URL is required' });
   }
 
-  const check = await Check.create({
-    type: 'image',
-    content: imageUrl,
-    result: 'Image verification not supported yet.',
-    score: 0,
-    sources: [],
-  });
+  try {
+    const check = await Check.create({
+      type: 'image',
+      content: imageUrl,
+      result: 'Image verification not supported yet.',
+      score: 0,
+      sources: [],
+    });
 
-  res.status(200).json(check);
+    res.status(200).json(check);
+  } catch (err) {
+    console.error('Image check error:', err.message);
+    res.status(500).json({ error: 'Failed to process image' });
+  }
 };
 
 export const getRecentChecks = async (req, res) => {
