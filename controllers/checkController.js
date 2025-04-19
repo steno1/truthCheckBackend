@@ -94,6 +94,10 @@ export const checkImage = async (req, res) => {
   }
 
   try {
+    // Here you can implement an external API to process the image URL if needed.
+    // As of now, we’re returning a static response for image checks.
+
+    // Save a placeholder result for image verification
     const check = await Check.create({
       type: 'image',
       content: imageUrl,
@@ -102,10 +106,10 @@ export const checkImage = async (req, res) => {
       sources: [],
     });
 
-    res.status(200).json(check);
+    return res.status(200).json(check);
   } catch (err) {
     console.error('Image check error:', err.message);
-    res.status(500).json({ error: 'Failed to process image' });
+    return res.status(500).json({ error: 'Failed to process image' });
   }
 };
 

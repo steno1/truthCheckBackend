@@ -3,8 +3,13 @@ import { checkText, checkImage, getRecentChecks } from '../controllers/checkCont
 
 const router = express.Router();
 
-router.post('/', checkText);
+// Route for checking text claims
+router.post('/text', checkText);
+
+// Route for checking image claims
 router.post('/image', checkImage);
+
+// Route to get recent checks
 router.get('/recent', getRecentChecks);
 
 export default router;
