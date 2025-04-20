@@ -15,6 +15,24 @@ const ratingMap = {
   'Unverified': 50
 };
 
+// Function to save the claim result in the database
+export const saveClaimResult = async (type, content, result, score, sources) => {
+  const claimDate = new Date();
+  try {
+    await Check.create({
+      type,
+      content,
+      result,
+      score,
+      sources,
+      claimDate,
+    });
+  } catch (error) {
+    console.error('Error saving claim result:', error.message);
+    throw new Error('Failed to save claim result');
+  }
+};
+
 export const checkText = async (req, res) => {
   const { text } = req.body;
 
@@ -67,15 +85,8 @@ export const checkText = async (req, res) => {
       sources = claims[0]?.claimReview?.map(r => r.url) || [];
     }
 
-    // Save to DB with claimDate
-    await Check.create({
-      type: 'text',
-      content: text,
-      result,
-      score,
-      sources,
-      claimDate, 
-    });
+    // Save the result using saveClaimResult
+    await saveClaimResult('text', text, result, score, sources);
 
     // Respond in expected format
     return res.status(200).json({
@@ -107,9 +118,6 @@ export const checkImage = async (req, res) => {
   }
 
   try {
-    // Here you can implement an external API to process the image URL if needed.
-    // For now, we're returning a static response for image checks.
-
     // Save a placeholder result for image verification
     const check = await Check.create({
       type: 'image',

@@ -1,5 +1,5 @@
 import express from 'express';
-import { checkText, checkImage, getRecentChecks } from '../controllers/checkController.js';
+import { checkText, checkImage, getRecentChecks, saveClaimResult} from '../controllers/checkController.js';
 
 const router = express.Router();
 
@@ -11,5 +11,8 @@ router.post('/image', checkImage);
 
 // Route to get recent checks
 router.get('/recent', getRecentChecks);
+
+// Route for saving claim result (new endpoint)
+router.post('/save', saveClaimResult); 
 
 export default router;
