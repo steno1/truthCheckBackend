@@ -4,6 +4,17 @@ import Check from '../models/Check.js';
 const GOOGLE_FACT_CHECK_API_URL = process.env.GOOGLE_FACT_CHECK_API_URL;
 const API_KEY = process.env.API_KEY;
 
+// Define the rating map for dynamic scoring
+const ratingMap = {
+  'True': 95,
+  'Mostly True': 85,
+  'Half True': 60,
+  'Mostly False': 40,
+  'False': 25,
+  'Pants on Fire': 10,
+  'Unverified': 50
+};
+
 export const checkText = async (req, res) => {
   const { text } = req.body;
 
@@ -27,7 +38,7 @@ export const checkText = async (req, res) => {
               {
                 textualRating: cached.result || 'No rating',
                 url: cached.sources?.[0] || '',
-                score: cached.score || 50,
+                score: cached.score || 50, // Use cached score if available
               },
             ],
           },
@@ -45,13 +56,14 @@ export const checkText = async (req, res) => {
 
     const claims = response?.data?.claims || [];
     let result = 'Unverified';
-    let score = 50;
+    let score = 50; // Default to 50 if not found in ratingMap
     let sources = [];
 
     if (claims.length > 0) {
       const review = claims[0]?.claimReview?.[0];
       result = review?.textualRating || 'Unverified';
-      score = result.toLowerCase().includes('true') ? 80 : 30;
+      // Use ratingMap to assign a dynamic score based on the result
+      score = ratingMap[result] || 50;
       sources = claims[0]?.claimReview?.map(r => r.url) || [];
     }
 
