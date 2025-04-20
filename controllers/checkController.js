@@ -38,7 +38,7 @@ export const checkText = async (req, res) => {
               {
                 textualRating: cached.result || 'No rating',
                 url: cached.sources?.[0] || '',
-                score: cached.score || 50, // Use cached score if available
+                score: cached.score || 50, 
               },
             ],
           },
@@ -56,24 +56,25 @@ export const checkText = async (req, res) => {
 
     const claims = response?.data?.claims || [];
     let result = 'Unverified';
-    let score = 50; // Default to 50 if not found in ratingMap
+    let score = 50; 
     let sources = [];
+    const claimDate = new Date(); 
 
     if (claims.length > 0) {
       const review = claims[0]?.claimReview?.[0];
       result = review?.textualRating || 'Unverified';
-      // Use ratingMap to assign a dynamic score based on the result
       score = ratingMap[result] || 50;
       sources = claims[0]?.claimReview?.map(r => r.url) || [];
     }
 
-    // Save to DB
+    // Save to DB with claimDate
     await Check.create({
       type: 'text',
       content: text,
       result,
       score,
       sources,
+      claimDate, 
     });
 
     // Respond in expected format
@@ -107,7 +108,7 @@ export const checkImage = async (req, res) => {
 
   try {
     // Here you can implement an external API to process the image URL if needed.
-    // As of now, we’re returning a static response for image checks.
+    // For now, we're returning a static response for image checks.
 
     // Save a placeholder result for image verification
     const check = await Check.create({
@@ -116,6 +117,7 @@ export const checkImage = async (req, res) => {
       result: 'Image verification not supported yet.',
       score: 0,
       sources: [],
+      claimDate: new Date(), 
     });
 
     return res.status(200).json(check);
@@ -127,7 +129,8 @@ export const checkImage = async (req, res) => {
 
 export const getRecentChecks = async (req, res) => {
   try {
-    const checks = await Check.find().sort({ createdAt: -1 }).limit(10);
+    // Retrieve the most recent checks
+    const checks = await Check.find().sort({ createdAt: -1 }).limit(10); 
     res.status(200).json(checks);
   } catch (err) {
     console.error('Error retrieving recent checks:', err.message);
