@@ -3,7 +3,15 @@ import mongoose from 'mongoose';
 const checkSchema = new mongoose.Schema({
   type: { type: String, enum: ['text', 'image'], required: true },
   content: { type: String, required: true }, 
-  result: { type: String, enum: ['Verified', 'Unverified', 'Partially Verified'], required: true }, 
+  result: {
+    type: String,
+    enum: [
+      'True', 'Mostly True', 'Half True', 'Mostly False', 'False', 
+      'Pants on Fire', 'Unverified', 'Verified', 'Partially Verified'
+    ],
+    required: true,
+  },
+   
   score: { type: Number, required: true },
   sources: [String],
   createdAt: { type: Date, default: Date.now },
