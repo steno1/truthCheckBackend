@@ -1,8 +1,12 @@
 import axios from 'axios';
 import Check from '../models/Check.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const GOOGLE_FACT_CHECK_API_URL = process.env.GOOGLE_FACT_CHECK_API_URL;
 const API_KEY = process.env.API_KEY;
+
+
 
 // Define the rating map for dynamic scoring
 const ratingMap = {
